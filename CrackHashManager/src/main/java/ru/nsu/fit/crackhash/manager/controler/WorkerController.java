@@ -20,7 +20,7 @@ public class WorkerController {
     }
 
     @PatchMapping(path = "/hash/crack/request", produces = MediaType.APPLICATION_JSON_VALUE)
-    public void setTask(@RequestBody CrackHashWorkerResponse request) {
+    public void handleResult(@RequestBody CrackHashWorkerResponse request) {
         crackService.handleResult(request);
     }
 }

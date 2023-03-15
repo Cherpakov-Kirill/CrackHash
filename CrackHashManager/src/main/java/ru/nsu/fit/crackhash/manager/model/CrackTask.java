@@ -28,7 +28,7 @@ public class CrackTask {
 
     public void addResults(List<String> words){
         successParts++;
-        if (successParts == partCount) {
+        if (successParts == partCount && status != TaskStatus.ERROR) {
             status = TaskStatus.READY;
         }
         data.addAll(words);
