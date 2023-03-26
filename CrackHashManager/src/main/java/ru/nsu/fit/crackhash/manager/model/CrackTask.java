@@ -1,6 +1,7 @@
 package ru.nsu.fit.crackhash.manager.model;
 
 import lombok.Data;
+import org.springframework.data.annotation.Id;
 
 import java.time.Instant;
 import java.util.LinkedList;
@@ -8,6 +9,8 @@ import java.util.List;
 
 @Data
 public class CrackTask {
+    @Id
+    public String id;
     private String hash;
     private Integer maxLength;
     private int partCount;
@@ -16,7 +19,8 @@ public class CrackTask {
     private Instant startTimestamp;
     private List<String> data;
 
-    public CrackTask(String hash, Integer maxLength, int partCount){
+    public CrackTask(String id, String hash, Integer maxLength, int partCount){
+        this.id = id;
         this.hash = hash;
         this.maxLength = maxLength;
         this.partCount = partCount;
@@ -39,5 +43,12 @@ public class CrackTask {
         if(Instant.now().toEpochMilli() - startTimestamp.toEpochMilli() > timeoutMillis){
             status = TaskStatus.ERROR;
         }
+    }
+
+    @Override
+    public String toString() {
+        return String.format(
+                "CrackTask[id=%s, hash='%s', maxLength='%s', partCount='%s', status='%s']",
+                id, hash, maxLength, partCount, status);
     }
 }

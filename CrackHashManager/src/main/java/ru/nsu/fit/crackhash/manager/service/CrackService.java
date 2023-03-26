@@ -2,6 +2,7 @@ package ru.nsu.fit.crackhash.manager.service;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
@@ -9,11 +10,11 @@ import ru.nsu.ccfit.schema.crack_hash_request.CrackHashManagerRequest;
 import ru.nsu.ccfit.schema.crack_hash_response.CrackHashWorkerResponse;
 import ru.nsu.fit.crackhash.manager.model.CrackTask;
 import ru.nsu.fit.crackhash.manager.model.TaskStatus;
+import ru.nsu.fit.crackhash.manager.repository.CrackTaskRepository;
 
 import java.util.Arrays;
-import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 @Service
 @Slf4j
@@ -36,14 +37,15 @@ public class CrackService {
     private long timeout;
 
     private String workerUrl;
-    private final Map<String, CrackTask> map;
+
+    @Autowired
+    private CrackTaskRepository repository;
 
     private final RestTemplate restTemplate;
 
     private final CrackHashManagerRequest.Alphabet alphabet;
 
     public CrackService(RestTemplate restTemplate) {
-        map = new ConcurrentHashMap<>();
         this.restTemplate = restTemplate;
         alphabet = new CrackHashManagerRequest.Alphabet();
     }
@@ -62,8 +64,8 @@ public class CrackService {
 
     public String setTask(String hash, Integer maxLength) {
         String requestId = UUID.randomUUID().toString();
-        CrackTask task = new CrackTask(hash, maxLength, partCount);
-        map.put(requestId, task);
+        CrackTask task = new CrackTask(requestId, hash, maxLength, partCount);
+        repository.save(task);
 
         CrackHashManagerRequest request = new CrackHashManagerRequest();
         request.setRequestId(requestId);
@@ -81,14 +83,23 @@ public class CrackService {
     }
 
     public CrackTask getTask(String requestId) {
-        CrackTask task = map.get(requestId);
-        task.checkOnTimeout(timeout);
-        return task;
+        Optional<CrackTask> optionalCrackTask = repository.findById(requestId);
+        if (optionalCrackTask.isPresent()) {
+            CrackTask task = optionalCrackTask.get();
+            task.checkOnTimeout(timeout);
+            return task;
+        }
+        log.info("CrackTask with requestId = '{}' not found", requestId);
+        return null;
     }
 
     public void handleResult(CrackHashWorkerResponse result) {
         log.info("Handled crack task result for {} part of {} task", result.getPartNumber(), result.getRequestId());
-        CrackTask task = map.get(result.getRequestId());
-        task.addResults(result.getAnswers().getWords());
+        Optional<CrackTask> optionalCrackTask = repository.findById(result.getRequestId());
+        if (optionalCrackTask.isPresent()) {
+            CrackTask task = optionalCrackTask.get();
+            task.addResults(result.getAnswers().getWords());
+            repository.save(task);
+        }
     }
 }
