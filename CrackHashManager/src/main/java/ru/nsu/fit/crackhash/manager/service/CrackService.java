@@ -100,6 +100,7 @@ public class CrackService {
             CrackTask task = optionalCrackTask.get();
             task.addResults(result.getAnswers().getWords());
             repository.save(task);
+            log.info("Saved crack task result for {} part of {} task", result.getPartNumber(), result.getRequestId());
         }
     }
 }

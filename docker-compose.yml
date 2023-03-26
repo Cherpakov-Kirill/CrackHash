@@ -30,7 +30,7 @@ services:
       replicas: 2
     networks:
       - crack-hash-network
-      
+
   rabbitmq:
     image: rabbitmq:3.9.9-management
     restart: always
@@ -42,29 +42,41 @@ services:
       RABBITMQ_DEFAULT_PASS: guest
     networks:
       - crack-hash-network
-      
+
   mongo1:
-    image: mongo:latest
-    command: mongod --replSet rs0 --port 27017
-    ports:
-      - "27017:27017"
+    container_name: mongo1
+    image: mongo:4.4
     volumes:
-      - mongo1_data:/data/db
+      - ~/mongors/data1:/data/db
+      - ./rs-init.sh:/scripts/rs-init.sh
+    networks:
+      - crack-hash-network
+    links:
+      - mongo2
+      - mongo3
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs" ]
+    
   mongo2:
-    image: mongo:latest
-    command: mongod --replSet rs0 --port 27017
+    container_name: mongo2
+    image: mongo:4.4
     volumes:
-      - mongo2_data:/data/db
+      - ~/mongors/data2:/data/db
+    networks:
+      - crack-hash-network
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs" ]
+    
   mongo3:
-    image: mongo:latest
-    command: mongod --replSet rs0 --port 27017
+    container_name: mongo3
+    image: mongo:4.4
     volumes:
-      - mongo3_data:/data/db
-   
-volumes:
- mongodb:
- mongodb_config:
- 
+      - ~/mongors/data3:/data/db
+    networks:
+      - crack-hash-network
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs" ]
+
 networks:
   crack-hash-network:
     driver: bridge

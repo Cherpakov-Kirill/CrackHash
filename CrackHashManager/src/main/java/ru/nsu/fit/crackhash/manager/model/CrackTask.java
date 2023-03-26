@@ -2,12 +2,14 @@ package ru.nsu.fit.crackhash.manager.model;
 
 import lombok.Data;
 import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
 import java.util.LinkedList;
 import java.util.List;
 
 @Data
+@Document(collection = "crackTaskCollection")
 public class CrackTask {
     @Id
     public String id;
