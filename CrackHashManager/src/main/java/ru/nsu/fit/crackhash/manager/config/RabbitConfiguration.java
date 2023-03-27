@@ -7,11 +7,19 @@ import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2XmlMessageConverter;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 @Configuration
 public class RabbitConfiguration {
+
+    @Value("${crackHashManager.rabbitmq.queue.workers-to-manager}")
+    private String listenerQueue;
+
+    @Value("${crackHashManager.rabbitmq.queue.manager-to-workers}")
+    private String senderQueue;
+
     @Bean
     public ConnectionFactory connectionFactory() {
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory("localhost");
@@ -34,8 +42,13 @@ public class RabbitConfiguration {
     }
 
     @Bean
-    public Queue crackHashQueue() {
-        return new Queue("crack-hash-queue");
+    public Queue managerToWorkersQueue() {
+        return new Queue(senderQueue);
+    }
+
+    @Bean
+    public Queue workersToManagerQueue() {
+        return new Queue(listenerQueue);
     }
 
     @Bean

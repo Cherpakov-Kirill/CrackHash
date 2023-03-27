@@ -2,15 +2,13 @@ package ru.nsu.fit.crackhash.manager.service;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.amqp.core.AmqpTemplate;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import ru.nsu.ccfit.schema.crack_hash_request.CrackHashManagerRequest;
 import ru.nsu.ccfit.schema.crack_hash_response.CrackHashWorkerResponse;
 import ru.nsu.fit.crackhash.manager.model.CrackTask;
 import ru.nsu.fit.crackhash.manager.model.TaskStatus;
+import ru.nsu.fit.crackhash.manager.rebbitmq.RabbitMqProducer;
 import ru.nsu.fit.crackhash.manager.repository.CrackTaskRepository;
 
 import java.util.Arrays;
@@ -20,13 +18,6 @@ import java.util.UUID;
 @Service
 @Slf4j
 public class CrackService {
-    private static final String apiWorkerUrl = "/internal/api/worker/hash/crack/task";
-
-    @Value("${crackHash.worker.ip}")
-    private String workerIp;
-
-    @Value("${crackHash.worker.port}")
-    private String workerPort;
 
     @Value("${crackHash.alphabet}")
     private String alphabetString;
@@ -37,36 +28,21 @@ public class CrackService {
     @Value("${crackHash.timeout}")
     private long timeout;
 
-    private String workerUrl;
+    private final CrackTaskRepository repository;
 
-    @Autowired
-    private CrackTaskRepository repository;
-
-    private final RestTemplate restTemplate;
-
-    private final AmqpTemplate amqpTemplate;
-
-
+    private final RabbitMqProducer rabbitMqProducer;
 
     private final CrackHashManagerRequest.Alphabet alphabet;
 
-    public CrackService(RestTemplate restTemplate, AmqpTemplate amqpTemplate) {
-        this.restTemplate = restTemplate;
-        this.amqpTemplate = amqpTemplate;
+    public CrackService(RabbitMqProducer rabbitMqProducer, CrackTaskRepository repository) {
+        this.rabbitMqProducer = rabbitMqProducer;
         alphabet = new CrackHashManagerRequest.Alphabet();
+        this.repository = repository;
     }
 
     @PostConstruct
     private void init() {
-        workerUrl = "http://" + workerIp + ":" + workerPort;
-
         alphabet.getSymbols().addAll(Arrays.stream(alphabetString.split("")).toList());
-    }
-
-    public void sendTask(CrackHashManagerRequest request) {
-        log.info("Set {} part of {} task request was sent", request.getPartNumber(), request.getRequestId());
-        // restTemplate.postForObject(workerUrl + apiWorkerUrl, request, String.class);
-        amqpTemplate.convertAndSend("crack-hash-queue", request);
     }
 
     public String setTask(String hash, Integer maxLength) {
@@ -83,7 +59,7 @@ public class CrackService {
 
         for (int i = 1; i <= partCount; i++) {
             request.setPartNumber(i);
-            sendTask(request);
+            rabbitMqProducer.sendMessage(request);
         }
         task.setStatus(TaskStatus.IN_PROGRESS);
         return requestId;

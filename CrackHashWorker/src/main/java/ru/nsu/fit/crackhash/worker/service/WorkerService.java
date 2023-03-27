@@ -1,16 +1,14 @@
 package ru.nsu.fit.crackhash.worker.service;
 
-import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.paukov.combinatorics.CombinatoricsFactory;
 import org.paukov.combinatorics.Generator;
 import org.paukov.combinatorics.ICombinatoricsVector;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 import ru.nsu.ccfit.schema.crack_hash_request.CrackHashManagerRequest;
 import ru.nsu.ccfit.schema.crack_hash_response.CrackHashWorkerResponse;
+import ru.nsu.fit.crackhash.worker.rebbitmq.RabbitMqProducer;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -19,29 +17,11 @@ import java.util.List;
 @Service
 @Slf4j
 public class WorkerService {
-    private static final String apiManagerUrl = "/internal/api/manager/hash/crack/request";
 
-    @Value("${crackHashManager.ip}")
-    private String managerIp;
+    private final RabbitMqProducer rabbitMqProducer;
 
-    @Value("${crackHashManager.port}")
-    private String managerPort;
-
-    private String managerUrl;
-    private final RestTemplate restTemplate;
-
-    public WorkerService(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
-
-    @PostConstruct
-    private void init() {
-        managerUrl = "http://" + managerIp + ":" + managerPort;
-    }
-
-    public void sendResult(CrackHashWorkerResponse request) {
-        log.info("Result of {} part of {} task was sent", request.getPartNumber(), request.getRequestId());
-        restTemplate.patchForObject(managerUrl + apiManagerUrl, request, String.class);
+    public WorkerService(RabbitMqProducer rabbitMqProducer) {
+        this.rabbitMqProducer = rabbitMqProducer;
     }
 
     public void initTask(CrackHashManagerRequest request) {
@@ -93,7 +73,7 @@ public class WorkerService {
         CrackHashWorkerResponse.Answers answers = new CrackHashWorkerResponse.Answers();
         answers.getWords().addAll(answerStrings);
         response.setAnswers(answers);
-        sendResult(response);
+        rabbitMqProducer.sendMessage(response);
     }
 
     private List<Generator<String>> initGenerators(ICombinatoricsVector<String> initialVector, int maxLength){
