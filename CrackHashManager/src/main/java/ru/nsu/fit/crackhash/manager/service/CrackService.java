@@ -2,6 +2,7 @@ package ru.nsu.fit.crackhash.manager.service;
 
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -43,10 +44,15 @@ public class CrackService {
 
     private final RestTemplate restTemplate;
 
+    private final AmqpTemplate amqpTemplate;
+
+
+
     private final CrackHashManagerRequest.Alphabet alphabet;
 
-    public CrackService(RestTemplate restTemplate) {
+    public CrackService(RestTemplate restTemplate, AmqpTemplate amqpTemplate) {
         this.restTemplate = restTemplate;
+        this.amqpTemplate = amqpTemplate;
         alphabet = new CrackHashManagerRequest.Alphabet();
     }
 
@@ -59,7 +65,8 @@ public class CrackService {
 
     public void sendTask(CrackHashManagerRequest request) {
         log.info("Set {} part of {} task request was sent", request.getPartNumber(), request.getRequestId());
-        restTemplate.postForObject(workerUrl + apiWorkerUrl, request, String.class);
+        // restTemplate.postForObject(workerUrl + apiWorkerUrl, request, String.class);
+        amqpTemplate.convertAndSend("crack-hash-queue", request);
     }
 
     public String setTask(String hash, Integer maxLength) {

@@ -9,6 +9,7 @@ services:
     expose:
       - "8081"
     environment:
+      - MONGO_URL=mongo1:27017,mongo2:27017,mongo3:27017/crack_db?replicaSet=dbrs
       - WORKER_DOMAIN=worker
       - MANAGER_PORT=8081
       - WORKER_PORT=8082
