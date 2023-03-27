@@ -5,14 +5,16 @@ import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import java.time.Instant;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 @Data
 @Document(collection = "crackTaskCollection")
 public class CrackTask {
     @Id
-    public String id;
+    private String id;
     private String hash;
     private Integer maxLength;
     private int partCount;
@@ -20,8 +22,9 @@ public class CrackTask {
     private TaskStatus status;
     private Instant startTimestamp;
     private List<String> data;
+    private Set<Integer> readyParts;
 
-    public CrackTask(String id, String hash, Integer maxLength, int partCount){
+    public CrackTask(String id, String hash, Integer maxLength, int partCount) {
         this.id = id;
         this.hash = hash;
         this.maxLength = maxLength;
@@ -29,10 +32,11 @@ public class CrackTask {
         this.successParts = 0;
         this.status = TaskStatus.CREATED;
         this.data = new LinkedList<>();
+        this.readyParts = new HashSet<>();
         this.startTimestamp = Instant.now();
     }
 
-    public void addResults(List<String> words){
+    public void addResults(List<String> words) {
         successParts++;
         if (successParts == partCount && status != TaskStatus.ERROR) {
             status = TaskStatus.READY;
@@ -42,7 +46,7 @@ public class CrackTask {
 
     public void checkOnTimeout(long timeoutMillis) {
         if (successParts == partCount) return;
-        if(Instant.now().toEpochMilli() - startTimestamp.toEpochMilli() > timeoutMillis){
+        if (Instant.now().toEpochMilli() - startTimestamp.toEpochMilli() > timeoutMillis) {
             status = TaskStatus.ERROR;
         }
     }

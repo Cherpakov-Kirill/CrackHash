@@ -18,6 +18,7 @@ public class RabbitMqConsumer {
     private final WorkerService workerService;
 
     private final RabbitMqProducer rabbitMqProducer;
+
     public RabbitMqConsumer(WorkerService workerService, RabbitMqProducer rabbitMqProducer) {
         this.workerService = workerService;
         this.rabbitMqProducer = rabbitMqProducer;

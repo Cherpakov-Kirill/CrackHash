@@ -69,7 +69,7 @@ public class CrackService {
         Optional<CrackTask> optionalCrackTask = repository.findById(requestId);
         if (optionalCrackTask.isPresent()) {
             CrackTask task = optionalCrackTask.get();
-            task.checkOnTimeout(timeout);
+//            task.checkOnTimeout(timeout);
             return task;
         }
         log.info("CrackTask with requestId = '{}' not found", requestId);
@@ -81,9 +81,13 @@ public class CrackService {
         Optional<CrackTask> optionalCrackTask = repository.findById(result.getRequestId());
         if (optionalCrackTask.isPresent()) {
             CrackTask task = optionalCrackTask.get();
-            task.addResults(result.getAnswers().getWords());
-            repository.save(task);
-            log.info("Saved crack task result for {} part of {} task", result.getPartNumber(), result.getRequestId());
+            if (!task.getReadyParts().contains(result.getPartNumber())) {
+                task.addResults(result.getAnswers().getWords());
+                repository.save(task);
+                log.info("Saved crack task result for {} part of {} task", result.getPartNumber(), result.getRequestId());
+            } else {
+                log.info("Crack task result for {} part of {} task was successfully saved", result.getPartNumber(), result.getRequestId());
+            }
         }
     }
 }

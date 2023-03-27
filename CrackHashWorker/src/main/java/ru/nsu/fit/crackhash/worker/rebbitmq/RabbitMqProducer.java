@@ -6,7 +6,6 @@ import org.springframework.amqp.core.AmqpTemplate;
 import org.springframework.amqp.rabbit.annotation.EnableRabbit;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
-import org.springframework.stereotype.Service;
 import ru.nsu.ccfit.schema.crack_hash_request.CrackHashManagerRequest;
 import ru.nsu.ccfit.schema.crack_hash_response.CrackHashWorkerResponse;
 
@@ -16,7 +15,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
 @Component
-@EnableRabbit
 public class RabbitMqProducer {
 
     @Value("${crackHashManager.rabbitmq.queue.workers-to-manager}")
@@ -34,7 +32,7 @@ public class RabbitMqProducer {
     }
 
     public void cacheConsumerTag(Channel channel, Long tag, CrackHashManagerRequest message) {
-        if (this.channel == null) this.channel = channel;
+        this.channel = channel;
         requestConsumerTagMap.put(getKey(message.getRequestId(), message.getPartNumber()), tag);
     }
 

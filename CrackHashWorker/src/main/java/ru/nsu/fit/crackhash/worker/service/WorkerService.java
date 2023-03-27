@@ -37,7 +37,7 @@ public class WorkerService {
 
         List<String> answerStrings = new LinkedList<>();
         int length = 0;
-        for(Generator<String> generator : generators) {
+        for (Generator<String> generator : generators) {
             length++;
             Iterator<ICombinatoricsVector<String>> iterator = generator.iterator();
 
@@ -76,9 +76,9 @@ public class WorkerService {
         rabbitMqProducer.sendMessage(response);
     }
 
-    private List<Generator<String>> initGenerators(ICombinatoricsVector<String> initialVector, int maxLength){
+    private List<Generator<String>> initGenerators(ICombinatoricsVector<String> initialVector, int maxLength) {
         List<Generator<String>> list = new LinkedList<>();
-        for (int length = 1; length <= maxLength; length++){
+        for (int length = 1; length <= maxLength; length++) {
             list.add(CombinatoricsFactory.createMultiCombinationGenerator(initialVector, length));
         }
         return list;

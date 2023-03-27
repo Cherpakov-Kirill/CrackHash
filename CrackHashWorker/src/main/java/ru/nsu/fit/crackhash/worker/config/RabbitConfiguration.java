@@ -1,10 +1,8 @@
 package ru.nsu.fit.crackhash.worker.config;
 
-import org.springframework.amqp.core.AmqpAdmin;
 import org.springframework.amqp.core.Queue;
 import org.springframework.amqp.rabbit.connection.CachingConnectionFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
-import org.springframework.amqp.rabbit.core.RabbitAdmin;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.amqp.support.converter.Jackson2XmlMessageConverter;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,6 +16,7 @@ public class RabbitConfiguration {
 
     @Value("${crackHashManager.rabbitmq.queue.manager-to-workers}")
     private String listenerQueue;
+
     @Bean
     public ConnectionFactory connectionFactory() {
         CachingConnectionFactory connectionFactory = new CachingConnectionFactory("localhost");
@@ -25,11 +24,6 @@ public class RabbitConfiguration {
         connectionFactory.setPassword("guest");
         connectionFactory.setPort(5672);
         return connectionFactory;
-    }
-
-    @Bean
-    public AmqpAdmin amqpAdmin() {
-        return new RabbitAdmin(connectionFactory());
     }
 
     @Bean
@@ -41,12 +35,12 @@ public class RabbitConfiguration {
 
     @Bean
     public Queue managerToWorkersQueue() {
-        return new Queue(listenerQueue);
+        return new Queue(listenerQueue, true);
     }
 
     @Bean
     public Queue workersToManagerQueue() {
-        return new Queue(senderQueue);
+        return new Queue(senderQueue, true);
     }
 
     @Bean

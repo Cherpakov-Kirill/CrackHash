@@ -34,7 +34,7 @@ public class UserController {
     public @ResponseBody CrackTaskResultDTO getTaskStatus(@RequestParam("requestId") String requestId) {
         CrackTask task = crackService.getTask(requestId);
         CrackTaskResultDTO crackTaskResultDTO = mapper.mapEntityToDto(task);
-        log.info("GET crack task result response = {}",  crackTaskResultDTO);
+        log.info("GET crack task result response = {}", crackTaskResultDTO);
         return crackTaskResultDTO;
     }
 }
