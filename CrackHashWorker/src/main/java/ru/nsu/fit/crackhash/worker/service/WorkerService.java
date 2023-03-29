@@ -85,7 +85,7 @@ public class WorkerService {
     private List<Generator<String>> initGenerators(ICombinatoricsVector<String> initialVector, int maxLength) {
         List<Generator<String>> list = new LinkedList<>();
         for (int length = 1; length <= maxLength; length++) {
-            list.add(CombinatoricsFactory.createMultiCombinationGenerator(initialVector, length));
+            list.add(CombinatoricsFactory.createPermutationWithRepetitionGenerator(initialVector, length));
         }
         return list;
     }
