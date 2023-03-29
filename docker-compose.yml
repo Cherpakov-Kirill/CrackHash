@@ -8,6 +8,7 @@ services:
       - "8080:8080"
     environment:
       - SERVER_PORT=8080
+      - WORKER_NUMBER=2
       - MONGO_URL=mongo1:27017,mongo2:27017,mongo3:27017/crack_db?replicaSet=dbrs
       - RABBIT_HOST=rabbitmq
       - RABBIT_PORT=5672

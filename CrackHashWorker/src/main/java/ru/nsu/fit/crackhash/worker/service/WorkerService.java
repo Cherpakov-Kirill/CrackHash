@@ -5,6 +5,8 @@ import org.apache.commons.codec.digest.DigestUtils;
 import org.paukov.combinatorics.CombinatoricsFactory;
 import org.paukov.combinatorics.Generator;
 import org.paukov.combinatorics.ICombinatoricsVector;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.stereotype.Service;
 import ru.nsu.ccfit.schema.crack_hash_request.CrackHashManagerRequest;
 import ru.nsu.ccfit.schema.crack_hash_response.CrackHashWorkerResponse;
@@ -18,20 +20,24 @@ import java.util.List;
 @Slf4j
 public class WorkerService {
 
-    private final RabbitMqProducer rabbitMqProducer;
 
-    public WorkerService(RabbitMqProducer rabbitMqProducer) {
+
+    private final RabbitMqProducer rabbitMqProducer;
+    private final ThreadPoolTaskExecutor taskExecutor;
+
+    public WorkerService(RabbitMqProducer rabbitMqProducer, @Qualifier("taskExecutor") ThreadPoolTaskExecutor taskExecutor) {
         this.rabbitMqProducer = rabbitMqProducer;
+        this.taskExecutor = taskExecutor;
     }
 
     public void initTask(CrackHashManagerRequest request) {
         log.info("Handled task : hash = {}, length = {}, part = {}/{}", request.getHash(), request.getMaxLength(), request.getPartNumber(), request.getPartCount());
 
-        Thread thread = new Thread(() -> WorkerService.this.runTask(request));
-        thread.start();
+        taskExecutor.execute(() -> WorkerService.this.runTask(request));
     }
 
     private void runTask(CrackHashManagerRequest request) {
+        log.info("Executed task : hash = {}, length = {}, part = {}/{}", request.getHash(), request.getMaxLength(), request.getPartNumber(), request.getPartCount());
         ICombinatoricsVector<String> initialVector = CombinatoricsFactory.createVector(request.getAlphabet().getSymbols());
         List<Generator<String>> generators = initGenerators(initialVector, request.getMaxLength());
 
