@@ -5,13 +5,15 @@ services:
       context: ./CrackHashManager
       dockerfile: Dockerfile
     ports:
-      - "8080:8081"
-    expose:
-      - "8081"
+      - "8080:8080"
     environment:
-      - WORKER_DOMAIN=worker
-      - MANAGER_PORT=8081
-      - WORKER_PORT=8082
+      - SERVER_PORT=8080
+      - WORKER_NUMBER=2
+      - MONGO_URL=mongo1:27017,mongo2:27017,mongo3:27017/crack_db?replicaSet=dbrs
+      - RABBIT_HOST=rabbitmq
+      - RABBIT_PORT=5672
+      - RABBIT_USER=guest
+      - RABBIT_PASS=guest
     networks:
       - crack-hash-network
       
@@ -19,14 +21,64 @@ services:
     build:
       context: ./CrackHashWorker
       dockerfile: Dockerfile
-    expose:
-      - "8082"
     environment:
-      - MANAGER_DOMAIN=manager
-      - MANAGER_PORT=8081
-      - WORKER_PORT=8082
+      - SERVER_PORT=8081
+      - RABBIT_HOST=rabbitmq
+      - RABBIT_PORT=5672
+      - RABBIT_USER=guest
+      - RABBIT_PASS=guest
+    deploy:
+      mode: replicated
+      replicas: 2
     networks:
       - crack-hash-network
+
+  rabbitmq:
+    image: rabbitmq:3.9.9-management
+    restart: always
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - crack-hash-network
+
+  mongo1:
+    container_name: mongo1
+    image: mongo:4.4
+    volumes:
+      - ~/mongors/data1:/data/db
+      - ./rs-init.sh:/scripts/rs-init.sh
+    networks:
+      - crack-hash-network
+    links:
+      - mongo2
+      - mongo3
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs" ]
+    
+  mongo2:
+    container_name: mongo2
+    image: mongo:4.4
+    volumes:
+      - ~/mongors/data2:/data/db
+    networks:
+      - crack-hash-network
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs" ]
+    
+  mongo3:
+    container_name: mongo3
+    image: mongo:4.4
+    volumes:
+      - ~/mongors/data3:/data/db
+    networks:
+      - crack-hash-network
+    restart: always
+    entrypoint: [ "/usr/bin/mongod", "--bind_ip_all", "--replSet", "dbrs" ]
+
 networks:
   crack-hash-network:
     driver: bridge
